@@ -1,8 +1,10 @@
 """
-DriftGuard — Streamlit Dashboard
-Connects to your FastAPI backend running on HuggingFace Spaces.
+MACI Sentinel — Streamlit Dashboard
+Maqasid AI · Production AI Governance
+Beenish Fatima | maqasidai.org | Superior University Lahore
+
 Run locally:  streamlit run app.py
-Or deploy as a separate HF Space (Streamlit type).
+Deploy:       HuggingFace Space (Streamlit type)
 """
 
 import streamlit as st
@@ -18,29 +20,34 @@ from datetime import datetime
 # ─────────────────────────────────────────────────────────────
 
 st.set_page_config(
-    page_title="DriftGuard — Fraud Monitor",
+    page_title="MACI Sentinel — AI Governance Monitor",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 # ─────────────────────────────────────────────────────────────
-# SIDEBAR — connection settings
+# SIDEBAR
 # ─────────────────────────────────────────────────────────────
 
 with st.sidebar:
-    st.image("https://img.shields.io/badge/DriftGuard-v3-blue", width=150)
+    st.markdown("## 🛡️ MACI Sentinel")
+    st.caption("Production AI Governance · Maqasid AI")
+    st.markdown("---")
     st.markdown("### 🔌 Connection")
 
     api_url = st.text_input(
         "API URL",
-        value=st.session_state.get("api_url",
-              "https://syedascientist72-macimlops.hf.space"),
+        value=st.session_state.get(
+            "api_url",
+            "https://syedascientist72-mlopsmaci.hf.space"
+        ),
         help="Your HuggingFace Space URL (no trailing slash)",
     )
     api_key = st.text_input(
         "API Key", type="password",
         value=st.session_state.get("api_key", ""),
+        help="Bearer token — request access at maqasidai.org",
     )
     st.session_state["api_url"] = api_url
     st.session_state["api_key"] = api_key
@@ -59,7 +66,12 @@ with st.sidebar:
             st.error(f"❌ {e}")
 
     st.markdown("---")
-    st.markdown("**Fatima & Nasim**  \nmaqasidai.org  \nSuperior University Lahore")
+    st.markdown(
+        "**Beenish Fatima**  \n"
+        "[maqasidai.org](https://maqasidai.org)  \n"
+        "Superior University Lahore"
+    )
+    st.caption("© 2026 Maqasid AI")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -88,10 +100,10 @@ def api_post(path: str, payload: dict):
         return None, str(e)
 
 
-def status_badge(level: str) -> str:
-    colours = {"HEALTHY": "🟢", "OK": "🟢",
-               "INFO": "🔵", "WARNING": "🟡", "CRITICAL": "🔴"}
-    return colours.get(level, "⚪") + f" **{level}**"
+def status_colour(level: str) -> str:
+    return {"HEALTHY": "🟢", "OK": "🟢",
+            "INFO": "🔵", "WARNING": "🟡",
+            "CRITICAL": "🔴"}.get(level, "⚪")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -99,8 +111,11 @@ def status_badge(level: str) -> str:
 # ─────────────────────────────────────────────────────────────
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📊 Dashboard", "🔍 Score Transaction",
-    "📁 Batch Scoring", "📈 Drift Monitor", "⚙️ Settings"
+    "📊 Dashboard",
+    "🔍 Score Transaction",
+    "📁 Batch Scoring",
+    "📈 Drift Monitor",
+    "⚙️ Settings",
 ])
 
 
@@ -109,8 +124,11 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 # ══════════════════════════════════════════════════════════════
 
 with tab1:
-    st.title("🛡️ DriftGuard — Fraud Model Monitor")
-    st.caption("Real-time production ML monitoring | maqasidai.org")
+    st.title("🛡️ MACI Sentinel")
+    st.markdown(
+        "**Know your model still works.**  \n"
+        "Production AI governance for fraud and risk models · [maqasidai.org](https://maqasidai.org)"
+    )
 
     col_refresh, _ = st.columns([1, 5])
     with col_refresh:
@@ -125,25 +143,22 @@ with tab1:
 
     d = st.session_state.get("dashboard", {})
     if d:
-        # Status row
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("System Status", d.get("system_status", "—"))
-        c2.metric("Threshold", d.get("current_threshold", "—"))
-        c3.metric("Total Alerts", d.get("total_alerts", 0))
-        c4.metric("Reference Rows", f"{d.get('reference_rows', 0):,}")
+        c1.metric("System Status",
+                  status_colour(d.get("system_status", "—")) + " " + d.get("system_status", "—"))
+        c2.metric("Active Threshold",  d.get("current_threshold", "—"))
+        c3.metric("Total Alerts",      d.get("total_alerts", 0))
+        c4.metric("Reference Rows",    f"{d.get('reference_rows', 0):,}")
 
-        # Model metrics
         m = d.get("model_metrics", {})
-        if any(m.values()):
+        if any(v for v in m.values() if v is not None):
             st.markdown("#### Model Performance")
             mc1, mc2, mc3, mc4 = st.columns(4)
-            mc1.metric("ROC-AUC",  m.get("roc_auc", "—"))
-            mc2.metric("PR-AUC",   m.get("pr_auc",  "—"))
-            mc3.metric("Trained Threshold", m.get("optimal_threshold", "—"))
-            mc4.metric("Avg Production Recall",
-                       m.get("avg_production_recall", "—"))
+            mc1.metric("ROC-AUC",               m.get("roc_auc", "—"))
+            mc2.metric("PR-AUC",                m.get("pr_auc",  "—"))
+            mc3.metric("Trained Threshold",      m.get("optimal_threshold", "—"))
+            mc4.metric("Avg Production Recall",  m.get("avg_production_recall", "—"))
 
-        # Alert summary
         crit = d.get("recent_critical", 0)
         warn = d.get("recent_warnings", 0)
         if crit:
@@ -153,9 +168,8 @@ with tab1:
         else:
             st.success("🟢 All systems nominal")
 
-    # Recent alerts table
     st.markdown("#### Recent Alerts")
-    alerts_data, err = api_get("/alerts", params={"unresolved_only": False})
+    alerts_data, _ = api_get("/alerts", params={"unresolved_only": False})
     if alerts_data and alerts_data.get("alerts"):
         df_alerts = pd.DataFrame(alerts_data["alerts"])
         cols = [c for c in ["id", "timestamp", "alert_level", "event",
@@ -163,7 +177,7 @@ with tab1:
                 if c in df_alerts.columns]
         st.dataframe(df_alerts[cols].head(20), use_container_width=True)
     else:
-        st.info("No alerts yet.")
+        st.info("No alerts yet. Run a drift report or batch score to generate alerts.")
 
 
 # ══════════════════════════════════════════════════════════════
@@ -172,44 +186,46 @@ with tab1:
 
 with tab2:
     st.header("🔍 Score a Single Transaction")
-    st.markdown("Enter V1–V28 and Amount. Paste a JSON dict or fill sliders.")
+    st.markdown(
+        "Enter feature values (V1–V28 + Amount). "
+        "The model returns a fraud probability and decision at the current threshold."
+    )
 
     input_method = st.radio("Input method", ["JSON", "Sliders"], horizontal=True)
 
     if input_method == "JSON":
-        example = {f"V{i}": round(np.random.normal(0, 1), 4)
-                   for i in range(1, 29)}
+        example = {f"V{i}": round(np.random.normal(0, 1), 4) for i in range(1, 29)}
         example["Amount"] = 149.62
         default_json = json.dumps({"features": example}, indent=2)
         raw = st.text_area("Transaction JSON", value=default_json, height=250)
+
         if st.button("🚀 Score", use_container_width=True):
             try:
                 payload = json.loads(raw)
                 result, err = api_post("/predict", payload)
                 if result:
-                    col1, col2 = st.columns(2)
                     prob = result["fraud_probability"]
+                    col1, col2 = st.columns(2)
                     col1.metric("Fraud Probability", f"{prob:.4f}")
-                    decision = result["decision"]
-                    if decision == "FRAUD":
-                        col2.error(f"🔴 {decision}")
+                    if result["decision"] == "FRAUD":
+                        col2.error(f"🔴 {result['decision']}")
                     else:
-                        col2.success(f"🟢 {decision}")
-                    st.caption(f"Threshold used: {result['threshold_used']}  |  "
-                               f"Time: {result['timestamp']}")
+                        col2.success(f"🟢 {result['decision']}")
+                    st.caption(
+                        f"Threshold used: {result['threshold_used']}  |  "
+                        f"Time: {result['timestamp']}"
+                    )
                 else:
                     st.error(err)
             except json.JSONDecodeError as e:
                 st.error(f"Invalid JSON: {e}")
 
     else:
-        st.markdown("**Adjust feature values:**")
         feat_vals = {}
-        cols_per_row = 4
         v_feats = [f"V{i}" for i in range(1, 29)]
-        for row_start in range(0, len(v_feats), cols_per_row):
-            row_feats = v_feats[row_start:row_start + cols_per_row]
-            cols = st.columns(cols_per_row)
+        for row_start in range(0, len(v_feats), 4):
+            row_feats = v_feats[row_start:row_start + 4]
+            cols = st.columns(4)
             for col, f in zip(cols, row_feats):
                 feat_vals[f] = col.slider(f, -5.0, 5.0, 0.0, 0.01, key=f)
         feat_vals["Amount"] = st.slider("Amount ($)", 0.0, 5000.0, 100.0, 1.0)
@@ -235,13 +251,14 @@ with tab2:
 with tab3:
     st.header("📁 Batch Scoring")
     st.markdown(
-        "Upload a CSV with columns V1–V28 + Amount (and optionally Class)."
+        "Upload a CSV with columns V1–V28 + Amount (and optionally a `Class` column "
+        "to get recall measurement)."
     )
 
     uploaded = st.file_uploader("Upload CSV", type=["csv"])
     if uploaded:
         df_preview = pd.read_csv(uploaded)
-        st.write(f"**Preview** — {len(df_preview):,} rows, {len(df_preview.columns)} columns")
+        st.write(f"**Preview** — {len(df_preview):,} rows · {len(df_preview.columns)} columns")
         st.dataframe(df_preview.head(5), use_container_width=True)
 
         if st.button("🚀 Score All Rows", use_container_width=True):
@@ -257,23 +274,23 @@ with tab3:
                     if r.status_code == 200:
                         result = r.json()
                         c1, c2, c3 = st.columns(3)
-                        c1.metric("Rows Scored", f"{result['rows_scored']:,}")
+                        c1.metric("Rows Scored",   f"{result['rows_scored']:,}")
                         c2.metric("Fraud Detected", result["fraud_count"])
-                        c3.metric("Fraud Rate", f"{result['fraud_rate']:.2%}")
+                        c3.metric("Fraud Rate",     f"{result['fraud_rate']:.2%}")
+
                         if result.get("recall") is not None:
                             recall = result["recall"]
                             if recall < 0.70:
-                                st.warning(f"⚠️ Recall: {recall:.1%} — below 70% target")
+                                st.warning(f"⚠️ Recall: {recall:.1%} — below 70% target. Consider re-optimising threshold.")
                             else:
                                 st.success(f"✅ Recall: {recall:.1%}")
 
-                        # Download results
                         res_df = pd.DataFrame(result["results"])
                         csv_out = res_df.to_csv(index=False)
                         st.download_button(
                             "⬇️ Download Scored CSV",
                             csv_out,
-                            file_name="driftguard_scored.csv",
+                            file_name="sentinel_scored.csv",
                             mime="text/csv",
                         )
                         st.dataframe(res_df.head(20), use_container_width=True)
@@ -283,18 +300,20 @@ with tab3:
                     st.error(str(e))
 
     st.markdown("---")
-    st.markdown("#### Or score via JSON batch")
+    st.markdown("#### Generate & score a demo batch")
     n_demo = st.slider("Number of demo transactions", 10, 500, 50)
     if st.button("Generate & Score Demo Batch"):
-        demo_txns = [{f"V{i}": round(float(np.random.normal(0,1)), 4)
-                      for i in range(1, 29)} | {"Amount": round(abs(float(np.random.exponential(100))), 2)}
-                     for _ in range(n_demo)]
+        demo_txns = [
+            {f"V{i}": round(float(np.random.normal(0, 1)), 4) for i in range(1, 29)}
+            | {"Amount": round(abs(float(np.random.exponential(100))), 2)}
+            for _ in range(n_demo)
+        ]
         result, err = api_post("/predict/batch", {"transactions": demo_txns})
         if result:
             c1, c2, c3 = st.columns(3)
-            c1.metric("Rows Scored", result["count"])
+            c1.metric("Rows Scored",    result["count"])
             c2.metric("Fraud Detected", result["fraud_count"])
-            c3.metric("Fraud Rate", f"{result['fraud_rate']:.2%}")
+            c3.metric("Fraud Rate",     f"{result['fraud_rate']:.2%}")
         else:
             st.error(err)
 
@@ -307,48 +326,48 @@ with tab4:
     st.header("📈 Drift Monitor")
     st.markdown(
         "Upload production data (CSV) to check for feature distribution drift "
-        "vs the reference dataset."
+        "against the reference baseline. PSI + KS tests run across all features."
     )
 
-    drift_file = st.file_uploader("Upload production CSV", type=["csv"],
-                                   key="drift_upload")
+    drift_file = st.file_uploader(
+        "Upload production CSV", type=["csv"], key="drift_upload"
+    )
     if drift_file:
         df_drift = pd.read_csv(drift_file)
         st.write(f"Uploaded: {len(df_drift):,} rows")
-        feat_cols = [c for c in df_drift.columns if c != "Class"]
+        feat_cols    = [c for c in df_drift.columns if c != "Class"]
         transactions = df_drift[feat_cols].fillna(0).to_dict(orient="records")
 
         if st.button("🔍 Run Drift Report", use_container_width=True):
             with st.spinner("Analysing drift..."):
-                result, err = api_post(
-                    "/drift/report",
-                    {"transactions": transactions}
-                )
+                result, err = api_post("/drift/report", {"transactions": transactions})
+
             if result:
                 level = result["alert_level"]
+                psi   = result["mean_psi"]
                 if level == "CRITICAL":
-                    st.error(f"🔴 CRITICAL — Mean PSI: {result['mean_psi']:.4f}")
+                    st.error(f"🔴 CRITICAL — Mean PSI: {psi:.4f}")
                 elif level == "WARNING":
-                    st.warning(f"🟡 WARNING — Mean PSI: {result['mean_psi']:.4f}")
+                    st.warning(f"🟡 WARNING — Mean PSI: {psi:.4f}")
                 elif level == "INFO":
-                    st.info(f"🔵 INFO — Mean PSI: {result['mean_psi']:.4f}")
+                    st.info(f"🔵 INFO — Mean PSI: {psi:.4f}")
                 else:
-                    st.success(f"🟢 OK — Mean PSI: {result['mean_psi']:.4f}")
+                    st.success(f"🟢 OK — Mean PSI: {psi:.4f}")
 
                 st.markdown(f"**Recommended action:** {result['recommended_action']}")
 
                 if result.get("critical_features"):
-                    st.error("Critical features: " +
-                             ", ".join(result["critical_features"]))
+                    st.error("Critical features: " + ", ".join(result["critical_features"]))
                 if result.get("warning_features"):
-                    st.warning("Warning features: " +
-                               ", ".join(result["warning_features"]))
+                    st.warning("Warning features: " + ", ".join(result["warning_features"]))
 
-                # Per-feature table
                 if result.get("per_feature"):
-                    df_feat = pd.DataFrame(result["per_feature"]).T.reset_index()
-                    df_feat.columns = ["feature"] + list(df_feat.columns[1:])
-                    df_feat = df_feat.sort_values("psi", ascending=False)
+                    df_feat = (
+                        pd.DataFrame(result["per_feature"])
+                        .T.reset_index()
+                        .rename(columns={"index": "feature"})
+                        .sort_values("psi", ascending=False)
+                    )
                     st.dataframe(df_feat, use_container_width=True)
             else:
                 st.error(err)
@@ -356,17 +375,20 @@ with tab4:
     st.markdown("---")
     st.subheader("⚙️ Threshold Optimisation")
     st.markdown(
-        "If you have production labels, re-optimise the decision threshold."
+        "Re-optimise the decision threshold using production labels.  \n"
+        "θ* = argmax Recall(θ) − λ·FPR(θ)"
     )
+
     thresh_file = st.file_uploader(
         "Upload CSV with `probability` and `label` columns",
         type=["csv"], key="thresh_upload"
     )
-    lam = st.slider("λ (FP cost weight)", 0.01, 0.50, 0.10, 0.01)
+    lam = st.slider("λ — FP cost weight (0.1 = standard fraud)", 0.01, 0.50, 0.10, 0.01)
+
     if thresh_file and st.button("Optimise Threshold"):
         df_t = pd.read_csv(thresh_file)
-        if "probability" not in df_t or "label" not in df_t:
-            st.error("CSV must have `probability` and `label` columns")
+        if "probability" not in df_t.columns or "label" not in df_t.columns:
+            st.error("CSV must have `probability` and `label` columns.")
         else:
             result, err = api_post("/threshold/optimize", {
                 "lambda_cost":   lam,
@@ -384,7 +406,7 @@ with tab4:
 
 
 # ══════════════════════════════════════════════════════════════
-# TAB 5 — SETTINGS / HEALTH
+# TAB 5 — SETTINGS
 # ══════════════════════════════════════════════════════════════
 
 with tab5:
@@ -404,14 +426,15 @@ with tab5:
     st.markdown("---")
     st.subheader("📤 Upload Reference Data")
     st.markdown(
-        "Replace the drift baseline with a new reference CSV "
-        "(must have V1–V28 + Amount + Class columns)."
+        "Replace the drift baseline with a new reference CSV.  \n"
+        "Required columns: V1–V28 + Amount + Class (0 = legitimate, 1 = fraud)."
     )
+
     ref_file = st.file_uploader("Reference CSV", type=["csv"], key="ref_upload")
     if ref_file and st.button("Upload Reference"):
         df_ref = pd.read_csv(ref_file)
         if "Class" not in df_ref.columns:
-            st.error("CSV must have a `Class` column (0=legit, 1=fraud)")
+            st.error("CSV must have a `Class` column (0 = legitimate, 1 = fraud).")
         else:
             feat_cols = [c for c in df_ref.columns if c != "Class"]
             result, err = api_post("/reference", {
@@ -419,7 +442,7 @@ with tab5:
                 "labels": df_ref["Class"].tolist(),
             })
             if result:
-                st.success(f"✅ Reference updated — {result['rows']:,} rows loaded")
+                st.success(f"✅ Reference baseline updated — {result['rows']:,} rows loaded.")
             else:
                 st.error(err)
 
