@@ -1,10 +1,9 @@
 """
-MACI Sentinel — Streamlit Dashboard
-Maqasid AI · Production AI Governance
-Beenish Fatima | maqasidai.org | Superior University Lahore
+MACI Sentinel — Production AI Governance Dashboard
+Maqasid AI | Beenish Fatima | maqasidai.org | Superior University Lahore
 
+Backend API: SyedaScientist72/macimlops  →  Space: SyedaScientist72/MLOps-MACI
 Run locally:  streamlit run app.py
-Deploy:       HuggingFace Space (Streamlit type)
 """
 
 import streamlit as st
@@ -12,7 +11,6 @@ import requests
 import pandas as pd
 import numpy as np
 import json
-import io
 from datetime import datetime
 
 # ─────────────────────────────────────────────────────────────
@@ -20,14 +18,41 @@ from datetime import datetime
 # ─────────────────────────────────────────────────────────────
 
 st.set_page_config(
-    page_title="MACI Sentinel — AI Governance Monitor",
+    page_title="MACI Sentinel — Production AI Governance",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
+DEFAULT_API_URL = "https://syedascientist72-mlops-maci.hf.space"
+
+CUSTOM_CSS = """
+<style>
+.hero {
+    background: linear-gradient(135deg, #0B1F3A 0%, #103A5E 50%, #0B1F3A 100%);
+    padding: 2.2rem 2.5rem;
+    border-radius: 14px;
+    margin-bottom: 1.4rem;
+    border: 1px solid #1d4a73;
+}
+.hero h1 { color: #ffffff; font-size: 2.0rem; margin-bottom: 0.2rem; }
+.hero p  { color: #9fc4e8; font-size: 1.0rem; margin: 0; }
+.diff-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #cfe6ff;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    margin: 4px 6px 0 0;
+}
+</style>
+"""
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
 # ─────────────────────────────────────────────────────────────
-# SIDEBAR
+# SIDEBAR — connection
 # ─────────────────────────────────────────────────────────────
 
 with st.sidebar:
@@ -38,20 +63,17 @@ with st.sidebar:
 
     api_url = st.text_input(
         "API URL",
-        value=st.session_state.get(
-            "api_url",
-            "https://syedascientist72-mlopsmaci.hf.space"
-        ),
-        help="Your HuggingFace Space URL (no trailing slash)",
+        value=st.session_state.get("api_url", DEFAULT_API_URL),
+        help="Your HuggingFace Space URL, no trailing slash",
     )
     api_key = st.text_input(
         "API Key", type="password",
         value=st.session_state.get("api_key", ""),
         help="Bearer token — request access at maqasidai.org",
     )
-    st.session_state["api_url"] = api_url
+    st.session_state["api_url"] = api_url.rstrip("/")
     st.session_state["api_key"] = api_key
-
+    api_url = st.session_state["api_url"]
     headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
 
     if st.button("🔄 Check Connection", use_container_width=True):
@@ -61,7 +83,7 @@ with st.sidebar:
                 st.success("✅ Connected")
                 st.session_state["health"] = r.json()
             else:
-                st.error(f"❌ {r.status_code}")
+                st.error(f"❌ HTTP {r.status_code}")
         except Exception as e:
             st.error(f"❌ {e}")
 
@@ -80,8 +102,7 @@ with st.sidebar:
 
 def api_get(path: str, params=None):
     try:
-        r = requests.get(f"{api_url}{path}", headers=headers,
-                         params=params, timeout=15)
+        r = requests.get(f"{api_url}{path}", headers=headers, params=params, timeout=15)
         if r.status_code == 200:
             return r.json(), None
         return None, f"HTTP {r.status_code}: {r.text[:200]}"
@@ -91,8 +112,7 @@ def api_get(path: str, params=None):
 
 def api_post(path: str, payload: dict):
     try:
-        r = requests.post(f"{api_url}{path}", headers=headers,
-                          json=payload, timeout=30)
+        r = requests.post(f"{api_url}{path}", headers=headers, json=payload, timeout=30)
         if r.status_code == 200:
             return r.json(), None
         return None, f"HTTP {r.status_code}: {r.text[:200]}"
@@ -101,9 +121,46 @@ def api_post(path: str, payload: dict):
 
 
 def status_colour(level: str) -> str:
-    return {"HEALTHY": "🟢", "OK": "🟢",
-            "INFO": "🔵", "WARNING": "🟡",
-            "CRITICAL": "🔴"}.get(level, "⚪")
+    return {"HEALTHY": "🟢", "OK": "🟢", "INFO": "🔵",
+            "WARNING": "🟡", "CRITICAL": "🔴"}.get(level, "⚪")
+
+
+# ─────────────────────────────────────────────────────────────
+# HERO — billboard section, always visible at top
+# ─────────────────────────────────────────────────────────────
+
+health_data, _ = api_get("/health")
+dash_data, _   = api_get("/dashboard/summary")
+
+st.markdown(f"""
+<div class="hero">
+  <h1>🛡️ MACI Sentinel</h1>
+  <p>Know your fraud model still works — before your business finds out the hard way.</p>
+  <div style="margin-top:14px;">
+    <span class="diff-badge">⚡ Cost-aware thresholding, not just accuracy</span>
+    <span class="diff-badge">📊 Real feature-level drift (PSI + KS), not prediction-only proxies</span>
+    <span class="diff-badge">🌍 Built for emerging-market fintech — lightweight, no Kubernetes</span>
+    <span class="diff-badge">🕌 Shariah-aware governance layer via MaqasidAI / MACI</span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+# Live status strip — this is the "billboard" proof-of-life
+status_cols = st.columns(5)
+if health_data:
+    model_ready = health_data.get("model_ready", False)
+    status_cols[0].metric("System", "🟢 LIVE" if model_ready else "🔴 DOWN")
+    status_cols[1].metric("Model Source", health_data.get("model_source", "—"))
+    roc = health_data.get("roc_auc")
+    status_cols[2].metric("ROC-AUC", f"{roc:.4f}" if roc else "—")
+    pr = health_data.get("pr_auc")
+    status_cols[3].metric("PR-AUC", f"{pr:.4f}" if pr else "—")
+    status_cols[4].metric("Threshold", health_data.get("current_threshold", "—"))
+else:
+    status_cols[0].metric("System", "⚪ Connecting…")
+    for c in status_cols[1:]:
+        c.metric("—", "—")
+    st.info("Enter your API key in the sidebar, or click **Check Connection**, to activate live monitoring.")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -111,11 +168,8 @@ def status_colour(level: str) -> str:
 # ─────────────────────────────────────────────────────────────
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📊 Dashboard",
-    "🔍 Score Transaction",
-    "📁 Batch Scoring",
-    "📈 Drift Monitor",
-    "⚙️ Settings",
+    "📊 Dashboard", "🔍 Score Transaction",
+    "📁 Batch Scoring", "📈 Drift Monitor", "⚙️ Settings",
 ])
 
 
@@ -124,40 +178,37 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 # ══════════════════════════════════════════════════════════════
 
 with tab1:
-    st.title("🛡️ MACI Sentinel")
-    st.markdown(
-        "**Know your model still works.**  \n"
-        "Production AI governance for fraud and risk models · [maqasidai.org](https://maqasidai.org)"
-    )
+    st.subheader("Production Snapshot")
 
     col_refresh, _ = st.columns([1, 5])
     with col_refresh:
-        refresh = st.button("🔄 Refresh", use_container_width=True)
+        if st.button("🔄 Refresh", use_container_width=True):
+            data, err = api_get("/dashboard/summary")
+            if data:
+                st.session_state["dashboard"] = data
+            elif err:
+                st.warning(f"Could not load dashboard: {err}")
 
-    if refresh or "dashboard" not in st.session_state:
-        data, err = api_get("/dashboard/summary")
-        if data:
-            st.session_state["dashboard"] = data
-        elif err:
-            st.warning(f"Could not load dashboard: {err}")
+    if "dashboard" not in st.session_state and dash_data:
+        st.session_state["dashboard"] = dash_data
 
     d = st.session_state.get("dashboard", {})
     if d:
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("System Status",
                   status_colour(d.get("system_status", "—")) + " " + d.get("system_status", "—"))
-        c2.metric("Active Threshold",  d.get("current_threshold", "—"))
-        c3.metric("Total Alerts",      d.get("total_alerts", 0))
-        c4.metric("Reference Rows",    f"{d.get('reference_rows', 0):,}")
+        c2.metric("Active Threshold", d.get("current_threshold", "—"))
+        c3.metric("Total Alerts", d.get("total_alerts", 0))
+        c4.metric("Reference Rows", f"{d.get('reference_rows', 0):,}")
 
         m = d.get("model_metrics", {})
         if any(v for v in m.values() if v is not None):
             st.markdown("#### Model Performance")
             mc1, mc2, mc3, mc4 = st.columns(4)
-            mc1.metric("ROC-AUC",               m.get("roc_auc", "—"))
-            mc2.metric("PR-AUC",                m.get("pr_auc",  "—"))
-            mc3.metric("Trained Threshold",      m.get("optimal_threshold", "—"))
-            mc4.metric("Avg Production Recall",  m.get("avg_production_recall", "—"))
+            mc1.metric("ROC-AUC", m.get("roc_auc", "—"))
+            mc2.metric("PR-AUC", m.get("pr_auc", "—"))
+            mc3.metric("Trained Threshold", m.get("optimal_threshold", "—"))
+            mc4.metric("Avg Production Recall", m.get("avg_production_recall", "—"))
 
         crit = d.get("recent_critical", 0)
         warn = d.get("recent_warnings", 0)
@@ -167,15 +218,19 @@ with tab1:
             st.warning(f"🟡 {warn} warning(s) in recent activity")
         else:
             st.success("🟢 All systems nominal")
+    else:
+        st.info("No dashboard data yet — check your connection in the sidebar.")
 
     st.markdown("#### Recent Alerts")
-    alerts_data, _ = api_get("/alerts", params={"unresolved_only": False})
+    alerts_data, alerts_err = api_get("/alerts", params={"unresolved_only": False})
     if alerts_data and alerts_data.get("alerts"):
         df_alerts = pd.DataFrame(alerts_data["alerts"])
         cols = [c for c in ["id", "timestamp", "alert_level", "event",
                             "mean_psi", "recall", "resolved"]
                 if c in df_alerts.columns]
         st.dataframe(df_alerts[cols].head(20), use_container_width=True)
+    elif alerts_err:
+        st.warning(f"Could not load alerts: {alerts_err}")
     else:
         st.info("No alerts yet. Run a drift report or batch score to generate alerts.")
 
@@ -187,14 +242,14 @@ with tab1:
 with tab2:
     st.header("🔍 Score a Single Transaction")
     st.markdown(
-        "Enter feature values (V1–V28 + Amount). "
-        "The model returns a fraud probability and decision at the current threshold."
+        "Enter V1–V28 + Amount. Engineered features (interaction terms, "
+        "log-amount, summary stats) are derived automatically server-side."
     )
 
     input_method = st.radio("Input method", ["JSON", "Sliders"], horizontal=True)
 
     if input_method == "JSON":
-        example = {f"V{i}": round(np.random.normal(0, 1), 4) for i in range(1, 29)}
+        example = {f"V{i}": round(float(np.random.normal(0, 1)), 4) for i in range(1, 29)}
         example["Amount"] = 149.62
         default_json = json.dumps({"features": example}, indent=2)
         raw = st.text_area("Transaction JSON", value=default_json, height=250)
@@ -251,8 +306,7 @@ with tab2:
 with tab3:
     st.header("📁 Batch Scoring")
     st.markdown(
-        "Upload a CSV with columns V1–V28 + Amount (and optionally a `Class` column "
-        "to get recall measurement)."
+        "Upload a CSV with columns V1–V28 + Amount (optionally `Class` for recall)."
     )
 
     uploaded = st.file_uploader("Upload CSV", type=["csv"])
@@ -274,24 +328,22 @@ with tab3:
                     if r.status_code == 200:
                         result = r.json()
                         c1, c2, c3 = st.columns(3)
-                        c1.metric("Rows Scored",   f"{result['rows_scored']:,}")
+                        c1.metric("Rows Scored", f"{result['rows_scored']:,}")
                         c2.metric("Fraud Detected", result["fraud_count"])
-                        c3.metric("Fraud Rate",     f"{result['fraud_rate']:.2%}")
+                        c3.metric("Fraud Rate", f"{result['fraud_rate']:.2%}")
 
                         if result.get("recall") is not None:
                             recall = result["recall"]
                             if recall < 0.70:
-                                st.warning(f"⚠️ Recall: {recall:.1%} — below 70% target. Consider re-optimising threshold.")
+                                st.warning(f"⚠️ Recall: {recall:.1%} — below 70% target.")
                             else:
                                 st.success(f"✅ Recall: {recall:.1%}")
 
                         res_df = pd.DataFrame(result["results"])
                         csv_out = res_df.to_csv(index=False)
                         st.download_button(
-                            "⬇️ Download Scored CSV",
-                            csv_out,
-                            file_name="sentinel_scored.csv",
-                            mime="text/csv",
+                            "⬇️ Download Scored CSV", csv_out,
+                            file_name="sentinel_scored.csv", mime="text/csv",
                         )
                         st.dataframe(res_df.head(20), use_container_width=True)
                     else:
@@ -311,9 +363,9 @@ with tab3:
         result, err = api_post("/predict/batch", {"transactions": demo_txns})
         if result:
             c1, c2, c3 = st.columns(3)
-            c1.metric("Rows Scored",    result["count"])
+            c1.metric("Rows Scored", result["count"])
             c2.metric("Fraud Detected", result["fraud_count"])
-            c3.metric("Fraud Rate",     f"{result['fraud_rate']:.2%}")
+            c3.metric("Fraud Rate", f"{result['fraud_rate']:.2%}")
         else:
             st.error(err)
 
@@ -325,13 +377,13 @@ with tab3:
 with tab4:
     st.header("📈 Drift Monitor")
     st.markdown(
-        "Upload production data (CSV) to check for feature distribution drift "
-        "against the reference baseline. PSI + KS tests run across all features."
+        "Upload production data (CSV) to check feature distribution drift "
+        "against the reference baseline. PSI + KS run across all 38 model features "
+        "(28 PCA components + Amount + 9 engineered features) — not just on "
+        "prediction scores, which is what most lightweight monitors check."
     )
 
-    drift_file = st.file_uploader(
-        "Upload production CSV", type=["csv"], key="drift_upload"
-    )
+    drift_file = st.file_uploader("Upload production CSV", type=["csv"], key="drift_upload")
     if drift_file:
         df_drift = pd.read_csv(drift_file)
         st.write(f"Uploaded: {len(df_drift):,} rows")
@@ -398,8 +450,8 @@ with tab4:
             if result:
                 c1, c2, c3 = st.columns(3)
                 c1.metric("New Threshold", result["optimal_threshold"])
-                c2.metric("Recall",        f"{result['recall_at_optimal']:.1%}")
-                c3.metric("FPR",           f"{result['fpr_at_optimal']:.3%}")
+                c2.metric("Recall", f"{result['recall_at_optimal']:.1%}")
+                c3.metric("FPR", f"{result['fpr_at_optimal']:.3%}")
                 st.success(result["message"])
             else:
                 st.error(err)
@@ -419,7 +471,7 @@ with tab5:
         else:
             st.error(err)
 
-    health = st.session_state.get("health", {})
+    health = st.session_state.get("health", health_data or {})
     if health:
         st.json(health)
 
