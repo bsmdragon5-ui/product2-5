@@ -205,10 +205,14 @@ with tab1:
         if any(v for v in m.values() if v is not None):
             st.markdown("#### Model Performance")
             mc1, mc2, mc3, mc4 = st.columns(4)
-            mc1.metric("ROC-AUC", m.get("roc_auc", "—"))
-            mc2.metric("PR-AUC", m.get("pr_auc", "—"))
+            roc = m.get("roc_auc")
+            pr  = m.get("pr_auc")
+            rec = m.get("avg_production_recall")
+            mc1.metric("ROC-AUC", f"{roc:.4f}" if isinstance(roc, (int, float)) else "—")
+            mc2.metric("PR-AUC", f"{pr:.4f}" if isinstance(pr, (int, float)) else "—")
             mc3.metric("Trained Threshold", m.get("optimal_threshold", "—"))
-            mc4.metric("Avg Production Recall", m.get("avg_production_recall", "—"))
+            mc4.metric("Avg Production Recall",
+                      f"{rec:.1%}" if isinstance(rec, (int, float)) else "—")
 
         crit = d.get("recent_critical", 0)
         warn = d.get("recent_warnings", 0)
