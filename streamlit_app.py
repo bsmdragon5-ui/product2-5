@@ -140,7 +140,6 @@ st.markdown(f"""
     <span class="diff-badge">⚡ Cost-aware thresholding, not just accuracy</span>
     <span class="diff-badge">📊 Real feature-level drift (PSI + KS), not prediction-only proxies</span>
     <span class="diff-badge">🌍 Built for emerging-market fintech — lightweight, no Kubernetes</span>
-    <span class="diff-badge">🕌 Shariah-aware governance layer via MaqasidAI / MACI</span>
   </div>
 </div>
 """, unsafe_allow_html=True)
